@@ -14,6 +14,6 @@ import java.util.Date;
 @Setter
 public class TodayWeatherEntity {
     @Id
-    private Date today;
+    private String today;
     private Integer temperature;
 }
