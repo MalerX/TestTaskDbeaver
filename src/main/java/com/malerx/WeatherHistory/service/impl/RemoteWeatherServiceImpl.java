@@ -30,6 +30,7 @@ public class RemoteWeatherServiceImpl implements RemoteWeatherService {
     }
 
     private int parseTemperature(String content) {
+
         return 0;
     }
 
