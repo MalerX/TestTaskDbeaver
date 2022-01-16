@@ -3,11 +3,11 @@ package com.malerx.WeatherHistory.service.impl;
 import com.malerx.WeatherHistory.service.RemoteWeatherService;
 import org.springframework.stereotype.Component;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class RemoteWeatherServiceImpl implements RemoteWeatherService {
@@ -30,8 +30,13 @@ public class RemoteWeatherServiceImpl implements RemoteWeatherService {
     }
 
     private int parseTemperature(String content) {
-
-        return 0;
+        Matcher matcher = Pattern.compile("(−?\\d{1,2}°)").matcher(content);
+        String result = "0";
+        while (matcher.find()) {
+            String rawTemp = matcher.group();
+            result = rawTemp.substring(0, rawTemp.length() - 1);
+        }
+        return Integer.parseInt(result);
     }
 
     private String getContent(HttpURLConnection connection) {
@@ -39,7 +44,9 @@ public class RemoteWeatherServiceImpl implements RemoteWeatherService {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
             String line;
             while ((line = br.readLine()) != null) {
-                sb.append(line).append("\n");
+                if (line.contains("weather__temp")) {
+                    sb.append(line).append("\n");
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
