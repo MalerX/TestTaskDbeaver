@@ -8,7 +8,7 @@ COPY pom.xml /build
 RUN mkdir -p /build
 #RUN mvn -B dependency:resolve dependency:resolve-plugins
 COPY src /build/src
-RUN mvn -f /build/pom.xml clean package
+RUN mvn -Dmaven.test.skip=true -f /build/pom.xml clean package
 
 #
 # Package stage
