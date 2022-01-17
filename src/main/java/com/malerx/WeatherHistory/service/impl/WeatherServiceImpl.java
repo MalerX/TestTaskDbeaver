@@ -1,9 +1,10 @@
 package com.malerx.WeatherHistory.service.impl;
 
+import com.malerx.WeatherHistory.annotation.LocalWeatherServiceBean;
+import com.malerx.WeatherHistory.annotation.RemoteWeatherServiceBean;
 import com.malerx.WeatherHistory.dto.TodayWeatherDTO;
 import com.malerx.WeatherHistory.models.TodayWeatherEntity;
 import com.malerx.WeatherHistory.repositories.WeatherRepository;
-import com.malerx.WeatherHistory.service.RemoteWeatherService;
 import com.malerx.WeatherHistory.service.WeatherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -13,12 +14,14 @@ import java.util.Date;
 import java.util.Optional;
 
 @Component
+@LocalWeatherServiceBean
 @RequiredArgsConstructor
 public class WeatherServiceImpl implements WeatherService {
     private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 
     private final WeatherRepository repository;
-    private final RemoteWeatherService weatherService;
+    @RemoteWeatherServiceBean
+    private final WeatherService remoteService;
 
     @Override
     public TodayWeatherDTO getTodayWeather() {
@@ -26,14 +29,15 @@ public class WeatherServiceImpl implements WeatherService {
         Optional<TodayWeatherEntity> todayWeather = repository.findById(todayDate);
         return todayWeather
                 .map(todayWeatherEntity -> new TodayWeatherDTO(todayDate, todayWeatherEntity.getTemperature()))
-                .orElseGet(() -> saveAndReturnCurrentWeather(todayDate, weatherService.getTodayWeather()));
+                .orElseGet(this::getSaveAndReturnCurrentWeather);
     }
 
-    private TodayWeatherDTO saveAndReturnCurrentWeather(String todayDate, int temperature) {
+    private TodayWeatherDTO getSaveAndReturnCurrentWeather() {
+        TodayWeatherDTO weatherDTO = remoteService.getTodayWeather();
         TodayWeatherEntity weatherEntity = new TodayWeatherEntity();
-        weatherEntity.setToday(todayDate);
-        weatherEntity.setTemperature(temperature);
+        weatherEntity.setToday(weatherDTO.date());
+        weatherEntity.setTemperature(weatherDTO.temperature());
         repository.save(weatherEntity);
-        return new TodayWeatherDTO(todayDate, temperature);
+        return weatherDTO;
     }
 }

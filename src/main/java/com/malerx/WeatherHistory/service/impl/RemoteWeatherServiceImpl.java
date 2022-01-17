@@ -1,39 +1,51 @@
 package com.malerx.WeatherHistory.service.impl;
 
-import com.malerx.WeatherHistory.service.RemoteWeatherService;
+import com.malerx.WeatherHistory.annotation.RemoteWeatherServiceBean;
+import com.malerx.WeatherHistory.dto.TodayWeatherDTO;
+import com.malerx.WeatherHistory.service.WeatherService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Component
-public class RemoteWeatherServiceImpl implements RemoteWeatherService {
+@RemoteWeatherServiceBean
+@Slf4j
+public class RemoteWeatherServiceImpl implements WeatherService {
+    private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
     private static final int TIMEOUT = 3000;
     private static final String URL = "https://yandex.ru/";
 
     @Override
-    public int getTodayWeather() {
-        HttpURLConnection connection = null;
+    public TodayWeatherDTO getTodayWeather() {
+        HttpURLConnection connection;
         try {
             connection = getConnection();
             if (connection != null) {
                 String content = getContent(connection);
-                return parseTemperature(content);
+                int temperature = parseTemperature(content);
+                return new TodayWeatherDTO(formatter.format(new Date()), temperature);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("ERR in getTodayWeather: ", e);
         }
-        return 0;
+        log.warn("Fail received weather.");
+        throw new RuntimeException("Fail received weather from " + URL);
     }
 
     private int parseTemperature(String content) {
         Matcher matcher = Pattern.compile("(−?\\d{1,2}°)").matcher(content);
         String result = "0";
         while (matcher.find()) {
-            String rawTemp = matcher.group();
+            String rawTemp = matcher.group().replace("−", "-");
             result = rawTemp.substring(0, rawTemp.length() - 1);
         }
         return Integer.parseInt(result);
@@ -49,7 +61,7 @@ public class RemoteWeatherServiceImpl implements RemoteWeatherService {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            log.warn("ERR in getContent: ", e);
         }
         return sb.toString();
     }
