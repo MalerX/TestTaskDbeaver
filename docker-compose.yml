@@ -1,18 +1,27 @@
-# Use postgres/example user/password credentials
 version: '3.1'
 
 services:
 
-  db:
-    image: postgres:14.1
-    restart: always
+  postgresdb7:
+    image: 'postgres:14.1-alpine'
+    container_name: postgresdb7
     environment:
-      POSTGRES_USER: dbeaver
-      POSTGRES_PASSWORD: weather
-      POSTGRES_DB: weather_histrory
+      - POSTGRES_USER=dbeaver
+      - POSTGRES_PASSWORD=dbeaver
+      - POSTGRES_DB=weather_history
 
-  adminer:
-    image: adminer
-    restart: always
+  app7:
+    image: 'dbeaver-test-spring-boot-app:latest'
+    build:
+      context: .
+    container_name: app7
+    depends_on:
+      - postgresdb7
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgresdb7:5432/weather_history
+      - SPRING_DATASOURCE_USERNAME=dbeaver
+      - SPRING_DATASOURCE_PASSWORD=dbeaver
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=create
     ports:
-      - 8081:8080
+      - "8082:8080"
+    restart: always
