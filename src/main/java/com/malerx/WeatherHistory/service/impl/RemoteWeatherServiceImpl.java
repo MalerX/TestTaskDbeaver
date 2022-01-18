@@ -45,7 +45,12 @@ public class RemoteWeatherServiceImpl implements WeatherService {
         Matcher matcher = Pattern.compile("(−?\\d{1,2}°)").matcher(content);
         String result = "0";
         while (matcher.find()) {
-            String rawTemp = matcher.group().replace("−", "-");
+            String rawTemp;
+            if (matcher.group().contains("−")) {
+                rawTemp = matcher.group().replace("−", "-");
+            } else {
+                rawTemp = matcher.group();
+            }
             result = rawTemp.substring(0, rawTemp.length() - 1);
         }
         return Integer.parseInt(result);
